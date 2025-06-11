@@ -1,0 +1,95 @@
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+
+function EditProfile() {
+    const [profile, setProfile] = useState({ name: '', title: '', bio: '', skill: '', socialLinks: {} });
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const res = await axios.get('http://localhost:8000/api/profile/me', {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`,
+                    },
+                });
+                setProfile(res.data);
+            } catch (err) {
+                console.error("Error fetching profile", err);
+            }
+        };
+        fetchProfile();
+    }, []);
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        if (name.startsWith('socialLinks.')) {
+            const key = name.split('.')[1];
+            setProfile((prev) => ({
+                ...prev,
+                socialLinks: { ...prev.socialLinks, [key]: value }
+            }));
+        } else {
+            setProfile((prev) => ({ ...prev, [name]: value }));
+        }
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            await axios.put('http://localhost:8000/api/profile/', profile, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                },
+            });
+            navigate('/profile');
+        } catch (err) {
+            alert("Failed to update profile");
+        }
+    };
+
+    return (
+        <div className="h-full w-screen mx-auto p-8 bg-white shadow-md ">
+            <h2 className="text-3xl font-bold mb-8 text-gray-800">Edit Profile</h2>
+            <form onSubmit={handleSubmit} className="space-y-6">
+
+                <div>
+                    <label htmlFor="name" className="block text-gray-700 font-medium mb-1">Name</label>
+                    <input name="name" id="name" value={profile.name} onChange={handleChange} placeholder="Name" className="w-full p-3 border rounded-md focus:outline-none focus:ring focus:border-indigo-500 text-gray-800"  />
+                </div>
+
+                <div>
+                    <label htmlFor="bio" className="block text-gray-700 font-medium mb-1">Bio</label>
+                    <textarea name="bio" id="bio" value={profile.bio} onChange={handleChange} placeholder="Bio" className="text-gray-800 w-full p-3 border rounded-md focus:outline-none focus:ring focus:border-indigo-500" rows="4" />
+                </div>
+
+                <div>
+                    <label htmlFor="skill" className="block text-gray-700 font-medium mb-1">Skills (comma-separated)</label>
+                    <input name="skill" id="skill" value={profile.skill} onChange={handleChange} placeholder="React, Node.js, MongoDB" className="text-gray-800  w-full p-3 border rounded-md focus:outline-none focus:ring focus:border-indigo-500" />
+                </div>
+
+                <div>
+                    <label htmlFor="github" className="block text-gray-700 font-medium mb-1">GitHub URL</label>
+                    <input name="socialLinks.github" id="github" value={profile.socialLinks.github || ''} onChange={handleChange} placeholder="https://github.com/username" className="text-gray-800 w-full p-3 border rounded-md focus:outline-none focus:ring focus:border-indigo-500" />
+                </div>
+
+                <div>
+                    <label htmlFor="linkedin" className="block text-gray-700 font-medium mb-1">LinkedIn URL</label>
+                    <input name="socialLinks.linkedin" id="linkedin" value={profile.socialLinks.linkedin || ''} onChange={handleChange} placeholder="https://linkedin.com/in/username" className="text-gray-800 w-full p-3 border rounded-md focus:outline-none focus:ring focus:border-indigo-500" />
+                </div>
+
+                <div>
+                    <label htmlFor="twitter" className="block text-gray-700 font-medium mb-1">Twitter URL</label>
+                    <input name="socialLinks.twitter" id="twitter" value={profile.socialLinks.twitter || ''} onChange={handleChange} placeholder="https://twitter.com/username" className="text-gray-800 w-full p-3 border rounded-md focus:outline-none focus:ring focus:border-indigo-500" />
+                </div>
+
+                <button type="submit" className="bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 transition text-lg">
+                    Save Changes
+                </button>
+            </form>
+        </div>
+    );
+}
+
+export default EditProfile;
